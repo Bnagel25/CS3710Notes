@@ -1,0 +1,243 @@
+#+TODO: TODO STUDY | COMPLETED
+#+LaTeX_CLASS_OPTIONS: [10pt]
+
+ [[https://utah.instructure.com/courses/461447]]
+
+ help-cs3710@lists.utah.edu
+
+
+* Table of Contents
+
+** [[Tuesday August 22]]
+
+** [[Thursday August 24]]
+
+** [[Tuesday September 4]]
+
+** [[Tuesday September 12]]
+
+** [[Tuesday September 19]]
+* Tuesday August 22
+
+** Course Overview
+   Working in teams, students employ the concepts of digital logic
+   design and computer organiation to design, implement and test a computing system
+
+** Course Materials
+   All coursework is linked in on Canvas. There is no textbook.
+
+** Lectures
+   Meet in the classroom (WEB L 102) most Tuesdays and Thursdays for a short period
+
+** Labs
+   Last portion of each Tuesday lecture and the entire class period on most THursdays will be
+   spent in the lab (MEB 3133)
+
+** Coursework and Grading
+   + Final Design Project (25%)
+   + Student Participation (20%)
+   + Midterm (15%)
+   + Checkpoints (40%)
+
+** Class Discussion
+
+*** Verilog
+    No need ot execute a program
+    Just Archetecture
+
+*** Class Overview
+    #+begin_src C
+           Memory/ Controller
+                  |        |
+                  v        v
+    Monitor <--- VGA <--- Core <---> Memory Controller
+                  |                       ^
+                  -------------------------
+    #+end_src
+
+* Thursday August 24
+
+** Verilog
+   Verilog is an archetecture, where order of assignment doesnt matter
+
+** Nexys3
+   Diligent Nexys3 is the board
+   Spartan 6 is the FPGA
+
+** ISE Project
+   + Create Verilog Module
+     - Each in a heirarchy
+     - Top level should be name of project
+   + Constraints File
+     - In module we set Net's We bind the network to outside pinpads
+       with what voltage and what clock to use
+     - Gives time feedback of whether or not instruction will complete in time
+   Code Should be warning and error free
+
+   Go get Master UCF File from Canvas / Files, copy it into project, instead of shitty
+   point & click. Change the name to match variables
+
+** 1st Project
+   {7: 0} leds --> to set a bunch of wires, with 7 being the MSB
+   #+begin_src verilog
+   reg[28:0] counter;
+   initial counter = 0;
+   always @ (posedge clk)
+       counter <= counter + 1'b1
+   assign leds = counter{28:0}
+   #+end_src
+
+* Tuesday September 4
+
+** Debouncing example
+   #+begin_src verilog
+   reg[17:0] down_counter    = 0;
+   reg[17:0] polling_counter = 0;
+   reg[15:0] button_counter  = 0;
+
+   always @ (posedge clk)
+   begin
+      polling_counter <= polling_counter + 1'b1;
+      down_counter    <= down_counter + 1'b1;
+
+      if(polling_counter == 0) // When it rolls over
+      begin
+          button_counter <= button_counter + down_count[17];
+          // down_counter <= 0;
+          down_counter   <= (17'b0, switch); // All zero's or all 1's
+      end
+   end
+   #+end_src
+
+*** Midterm Question
+    if down_counter     = [011111111...]
+    and polling_counter = [111111111...]
+
+    Would down_counter[17] every be 1
+    if down_counter <= 0; was in the polling_counter loop?
+
+    No: Non-blocking assignment will take the last value it is given
+    to calculate itself at the clock edge.
+
+** VGA Example
+   He only used assign calls
+   On the posedge clk, he would allow the values to be the next value, so every
+   value of the next_pixel, column, row, color would be calculated
+
+   He set VGACOLOR all in one variable,
+   He allowed each pixel to be set for 3 counts
+
+* Tuesday September 12
+
+** Ternary Branches
+   out = bool ? A: bool ? c: 0;
+
+** Reduction Operators
+   &signal_group = take every bit and then 'and' together
+
+** Scalar Multiplication
+   '{num {signal_group}}' = num * signal_group
+
+** Linear Feeback Random # Generator
+   #+begin_src verilog
+   initial seed = 500;
+   seed <= {seed[29:0], seed[30] ^ seed[27]};
+   #+end_src
+   Can expand by taking {30,29} and {27, 26}
+
+** Glyph
+   Glyphs = graphic for a character.
+   + 64 bits to describe each letter
+   + Stored in a (.coe) which is a file that contains comma seperated binary
+   + 16-bit words
+   + 126 bit aligned
+
+
+| Line 0 char | Padding | Line 1 char |
+|-------------+---------+-------------|
+| 64-bits     |     128 | 64-bits     |
+
+** Pixel Generation
+   #+begin_src C
+   Req delivered, col and row prepared
+   edge _______________________________________ latch col/row, reset statemachine
+
+   Provides Data
+   edge _______________________________________ latch address
+
+   Computes Memory Address, give to RAM
+   edge _______________________________________ latch ram address
+
+   Extract bits, compute color
+   edge _______________________________________ latch color (background or foreground)
+   #+end_src
+** RAM
+   #+begin_src C
+   Port 1                        Port 2
+                  ______________
+   Address -----> |           | <--- Address
+   Data Out <---- | Block Ram | ---> Data Out
+   Data In <----- |           | <--- Data In
+   WriteEnable -> |           | <--- Write Enable
+   Clk ---------> |           | <--- Clk
+                  _____________
+   #+end_src
+* Tuesday September 19
+** Glyph COE
+   #+begin_src C
+    COE FILE        ONE CHARS GLYPH
+   ___________
+   | Entry 0 | --> | 0-1 Word     | ------> | TOP ROW  | Bottom Row |
+   |         |     | ------------ |         |----------|------------|
+   |         |     | 2-3 Word     |         |01010101  | 1001001011 |
+   |         |     | ------------ |        rightmost   leftmost
+   |         |     | 4-5 Word     |
+   |         |     | ------------ |
+   |         |     | 6-7 Word     |
+   |         |     |              |
+   #+end_Src C
+   1. Physical pixel
+   2. Logical Pixel # [0..640), [0...480)
+   3. Char row / column
+   4. mem address that stores that text
+** Combinatorial Logic
+   When building combinatorial logic, always assign something.
+   Even at the beginning will have it avoid having an unintentional latch.
+   Most always @ * can be assigned using a ternary operator.
+** Project Timeline
+   - Form Teams by September 28
+   - Design assembly language before fall break
+   - Core running by November 2
+   - Write code and interface w/ hardware by November
+   - Write a short document and poster
+   - Demo = last week of classes
+** Core
+   + Must execute instructions
+     - Fetch an instruction from RAM
+     - Do it, Advance the PC
+   + Register File (Assembly Register)
+   + Must Use 16-bit addressing
+   + No MIPS / Design Custom assembly
+     - Basic arithmatic
+     - Jump of some sort
+     - Load and Store from mem
+     - Conditionals / Branch
+   + Should use 24-bit addresses
+   + Should Consider multiword instructions
+   #+begin_src C
+   |----------|
+   |Glyphs    |
+   |----------|0x60000
+   |Text      |
+   |----------|0x40000
+   |Code      |
+   |----------|0x00000
+   #+end_src
+** Projects
+   + Meet requirements, be simple, be complete (YES)
+   + Meet requirements, be ambitiious, be undone (NO)
+** Assembler
+   takes instructions (add, A, B) and translates them into instructions for memory
+   Also keeps track of where things are landing in memory, this is done with a 2-pass
+   assembler.
+
